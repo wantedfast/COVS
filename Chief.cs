@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
+using NUnit;
 
 public class Chief : Agent
 {
@@ -36,34 +37,28 @@ public class Chief : Agent
     public override void CollectObservations(VectorSensor sensor)
     {
         sensor.AddObservation(transform.localPosition);
-        sensor.AddObservation((Vector3)envController.onion.transform.position - transform.localPosition);
-        sensor.AddObservation((Vector3)envController.dish.transform.position - transform.localPosition);
-        sensor.AddObservation((Vector3)envController.pot.transform.position - transform.localPosition);
-
-        if (envController.isCooked)
-        { 
-            sensor.AddObservation((Vector3)envController.counter.transform.position - transform.localPosition);
-        }
-        else
-        {
-            sensor.AddObservation(Vector3.zero); // 如果没有煮熟，添加一个零向量占位
-        }
-
-        //sensor.AddObservation(heldItem == HeldItem.None ? 0f : (heldItem == HeldItem.Onion ? 1f : 2f));
+        sensor.AddObservation(envController.onion.transform.position - transform.localPosition);
+        sensor.AddObservation(envController.dish.transform.position - transform.localPosition);
+        sensor.AddObservation(envController.pot.transform.position - transform.localPosition);
+        sensor.AddObservation(envController.counter.transform.position - transform.localPosition);
+        
         sensor.AddObservation((float)heldItem);
+
         sensor.AddObservation(envController.hasOnion ? 1f : 0f);
         sensor.AddObservation(envController.hasDish ? 1f : 0f);
 
         sensor.AddObservation(envController.PotHasOnion ? 1f : 0f);
         sensor.AddObservation(envController.PotHasDish ? 1f : 0f);
-        sensor.AddObservation(envController.isCooked ? 1f : 0f);
+        sensor.AddObservation(envController.PotHasSoupReady ? 1f : 0f);
+
+        //sensor.AddObservation(envController.isCooked ? 1f : 0f);
         sensor.AddObservation(envController.isServerd ? 1f : 0f);
     }
 
     public override void OnActionReceived(ActionBuffers actions)
     {
-        float moveX = actions.ContinuousActions[0];
-        float moveZ = actions.ContinuousActions[1];
+        float moveX = 2f * Mathf.Clamp(actions.ContinuousActions[0], -1f, 1f);
+        float moveZ = 2f * Mathf.Clamp(actions.ContinuousActions[1], -1f, 1f);
         Vector3 move = new Vector3(moveX, 0f, moveZ) * 4f;
         rb.MovePosition(rb.position + move * Time.fixedDeltaTime);
 
@@ -78,32 +73,41 @@ public class Chief : Agent
             envController.hasOnion = true;
             AddReward(1f);
         }
+
         else if (collision.collider.CompareTag("Dish") && heldItem == HeldItem.None && !envController.hasDish)
         {
             heldItem = HeldItem.Dish;
             envController.hasDish = true;
             AddReward(1f);
         }
-        else if (collision.collider.CompareTag("Pot") && (heldItem == HeldItem.Dish || heldItem == HeldItem.Onion))
+
+        else if (collision.collider.CompareTag("Pot"))
         {
-            if (!envController.IsItemInPot(heldItem))
+            if (heldItem == HeldItem.Dish || heldItem == HeldItem.Onion)
             {
-                AddReward(2f);
-                bool cooked = envController.PutInPot(heldItem);
-
-                heldItem = HeldItem.None; // 放入锅后清空手持物品
-
-                if (cooked)
+                if (!envController.IsItemInPot(heldItem))
                 {
-                    heldItem = HeldItem.SoupReady; // 如果锅中已经煮熟，设置为已准备好的汤
-                    Debug.Log($"cooked, heldItem set to SoupReady: {heldItem}");
+                    envController.PutInPot(heldItem);
+                    AddReward(1f);
+                    heldItem = HeldItem.None;
+                }
+
+                if (envController.CheckSoupReady())
+                {
+                    envController.GenerateSoup();
+                    AddReward(2f);
+                    envController.isCooked = true;
                 }
             }
-            else
+
+            else if (heldItem == HeldItem.None && envController.PotHasSoupReady)
             {
-                Debug.Log("锅中已有该物品，不能重复放入");
+                // Retrieve the soup from the pot
+                heldItem = HeldItem.SoupReady;
+                envController.PotHasSoupReady = false;
             }
         }
+
         else if (collision.collider.CompareTag("Counter") && envController.isCooked)
         {
             Debug.Log($"{gameObject.name} 撞到了柜台，heldItem={heldItem}, isCooked={envController.isCooked}, isServerd={envController.isServerd}");
@@ -111,13 +115,14 @@ public class Chief : Agent
             if (heldItem == HeldItem.SoupReady && !envController.isServerd)
             {
                 envController.ServeSuccess();
-                //AddReward(2f);
+                heldItem = HeldItem.None;
                 envController.agentRenderer.material.color = Color.cyan;
             }
         }
+
         else if (collision.collider.CompareTag("wall"))
         {
-            AddReward(-0.001f);
+            AddReward(-0.0001f);
         }
     }
 

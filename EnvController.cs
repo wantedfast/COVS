@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
+using Unity.VisualScripting;
 
 public class CookingEnvController : MonoBehaviour
 {
@@ -20,6 +21,9 @@ public class CookingEnvController : MonoBehaviour
     public bool hasDish = false;
     public bool PotHasOnion = false;
     public bool PotHasDish = false;
+    public bool PotHasSoupReady = false;
+
+
     public bool isCooked = false;
 
     public bool isServerd = false;
@@ -48,7 +52,7 @@ public class CookingEnvController : MonoBehaviour
 
     void Awake()
     {
-        MaxEnvSteps = 15000;
+        MaxEnvSteps = 10000;
     }
 
     void FixedUpdate()
@@ -63,7 +67,7 @@ public class CookingEnvController : MonoBehaviour
         }
     }
 
-    public bool PutInPot(Chief.HeldItem item)
+    public void PutInPot(Chief.HeldItem item)
     {
         if (item == Chief.HeldItem.Onion && !PotHasOnion)
         {
@@ -74,17 +78,31 @@ public class CookingEnvController : MonoBehaviour
             PotHasDish = true;
         }
 
-        if (PotHasOnion && PotHasDish && !isCooked)
-        {
-            isCooked = true;
-            float timeReward = 1f - (float)stepCount / MaxEnvSteps;
-            M_agentGroup.AddGroupReward(2f);
-            agentRenderer.material.color = Color.green; // Change color to indicate cooking success
+        // if (PotHasOnion && PotHasDish && !isCooked)
+        // {
+        //     isCooked = true;
+        //     M_agentGroup.AddGroupReward(2f);
 
-            return true;
-        }
+        //     agentRenderer.material.color = Color.green; // Change color to indicate cooking success
+        //     return true;
+        // }
 
-        return false;
+        // return false;
+    }
+
+    public bool CheckSoupReady()
+    {
+        return PotHasOnion && PotHasDish && !PotHasSoupReady;
+    }
+
+    public void GenerateSoup()
+    {
+        M_agentGroup.AddGroupReward(2f);
+        agentRenderer.material.color = Color.green; // Change color to indicate cooking success
+
+        PotHasDish = false;
+        PotHasOnion = false;
+        PotHasSoupReady = true;
     }
 
     public bool IsItemInPot(Chief.HeldItem item)
@@ -98,12 +116,17 @@ public class CookingEnvController : MonoBehaviour
 
     public void ServeSuccess()
     {
-        float timeReward = 1f - (float)stepCount / MaxEnvSteps;
         M_agentGroup.AddGroupReward(3f); // 上菜成功奖励
         isServerd = true;
         Debug.Log("🍽️ Served successfully!");
-        M_agentGroup.EndGroupEpisode();
-        ResetEnv();
+        Academy.Instance.StatsRecorder.Add
+        (
+            "ServeSuccessCount",   // 统计项名字
+            1,                     // 每次+1
+            StatAggregationMethod.Sum // 用Sum累加
+        );
+        // M_agentGroup.EndGroupEpisode();
+        // ResetEnv();
     }
 
     public void WallHitted()
@@ -127,12 +150,14 @@ public class CookingEnvController : MonoBehaviour
         stepCount = 0;
         hasOnion = false;
         hasDish = false;
+
         PotHasOnion = false;
         PotHasDish = false;
+        PotHasSoupReady = false;
+        
         isCooked = false;
         isServerd = false;
-        lastAgentToPut = "";
-        // 重置 agent 位置（避免出生在桌子上可进一步优化）
+  
         foreach (var agent in agentList)
         {
             agent.transform.localPosition = new Vector3(Random.Range(-3f, 3f), 0.5f, Random.Range(-2f, 2f));
