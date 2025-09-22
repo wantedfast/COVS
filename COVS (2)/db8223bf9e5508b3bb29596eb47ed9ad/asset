@@ -1,0 +1,38 @@
+{
+    "Chief": {
+        "checkpoints": [
+            {
+                "steps": 499000,
+                "file_path": "results/continuous/Chief/Chief-499000.onnx",
+                "reward": 2.159433046976725,
+                "creation_time": 1758524219.191647,
+                "auxillary_file_paths": [
+                    "results/continuous/Chief/Chief-499000.pt"
+                ]
+            },
+            {
+                "steps": 512000,
+                "file_path": "results/continuous/Chief/Chief-512000.onnx",
+                "reward": 2.4933498576283455,
+                "creation_time": 1758524220.1257908,
+                "auxillary_file_paths": [
+                    "results/continuous/Chief/Chief-512000.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 512000,
+            "file_path": "results/continuous/Chief.onnx",
+            "reward": 2.4933498576283455,
+            "creation_time": 1758524220.1257908,
+            "auxillary_file_paths": [
+                "results/continuous/Chief/Chief-512000.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.7.1+cu126"
+    }
+}
