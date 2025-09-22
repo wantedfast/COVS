@@ -1,9 +1,5 @@
-Perfect — here’s a proper **README.md** format you can drop straight into your repo 👇
 
----
-
-````markdown
-# 🍲 Overcooked-like Multi-Agent Cooperation with Unity ML-Agents
+# 🍲 Continuous OVercooked Simulator in Multi Agent Reinforcemnet Learning
 
 This project implements a **multi-agent reinforcement learning** environment inspired by *Overcooked*.  
 Two agents must cooperate implicitly (without pre-defined roles, they will chose their role by their own decesion based on environment feedback) to complete cooking tasks such as:
@@ -11,7 +7,6 @@ Two agents must cooperate implicitly (without pre-defined roles, they will chose
 - Cooking in a pot  
 - Delivering finished soup to a counter  
 
----
 
 ## 📦 Environment Setup
 
