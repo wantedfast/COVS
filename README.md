@@ -17,6 +17,7 @@ This project uses **Unity ML-Agents** package with **conda** envionment package 
 
 import COVS.unitypackage to your unity 3D project.
 
+And then create you own environment by conda.
 ```bash
 conda create -n overcooked
 conda activate overcooked
